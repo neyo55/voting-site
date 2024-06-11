@@ -1,0 +1,21 @@
+version: "3.11"
+
+services:
+  app:
+    build: .
+    volumes:
+      - .:/app
+    ports:
+      - 8000:8000
+    image: votingsite.azurecr.io/voting-app:latest
+    container_name: voting-app
+    command: python manage.py runserver 0.0.0.0:8000
+
+
+
+
+
+
+
+
+

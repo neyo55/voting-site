@@ -1,0 +1,141 @@
+############# STEP 1 ###############
+
+# Command to build the docker image
+docker-compose build --no-cache app
+
+# Command to tag it 'latest'
+docker tag voting-app:latest voting-app:latest
+
+# To see list of dockerized images 
+docker images
+
+
+############# STEP 2 ###############
+
+# Select the subscription 
+az account set --subscription "Subscription 1"
+
+# Create Azure resource group
+az group create --name voting-site-resource --location "UK West"
+
+# Create Azure container registry under resource group
+az acr create --resource-group voting-site-resource --name votingsite --sku Basic
+
+# Enable admin access to the ACR
+az acr update --name votingsite --admin-enabled true
+
+# Login to ACR 
+az acr login --name votingsite
+
+# Push the image to ACR
+docker push votingsite.azurecr.io/voting-app:latest
+
+# Create service plan and select the free plan F1
+az appservice plan create --name voting-site-plan --resource-group voting-site-resource --sku F1 --is-linux
+
+# Create web app within the app service plan and to also use the Docker image from ACR
+az webapp create --resource-group voting-site-resource --plan voting-site-plan --name voting-site-web --deployment-container-image-name votingsite.azurecr.io/voting-app:latest
+
+# To list webapp config settings 
+az webapp config appsettings list --resource-group voting-site-resource --name voting-site-web
+
+# Configure the web app and expose it to port 8000
+az webapp config appsettings set --name voting-site-web --resource-group voting-site-resource --settings WEBSITES_PORT=8000
+
+# To view the deployed webapp
+az webapp browse --name voting-site-web --resource-group voting-site-resource
+
+# To restart the container 
+az webapp restart --name voting-site-web --resource-group voting-site-resource
+
+
+#######################################################################
+
+Let's break down and analyze each command in your provided script to understand its purpose and verify its correctness:
+
+1. **Create Azure Resource Group and Azure Container Registry**:
+    ```bash
+    az acr create --resource-group voting-site-resource --name votingsite --sku Basic
+    ```
+    - This command creates an Azure Container Registry (ACR) named `votingsite` within the resource group `voting-site-resource`.
+    - The `--sku Basic` parameter specifies the pricing tier for the ACR.
+
+2. **Enable Admin Access to the ACR**:
+    ```bash
+    az acr update --name votingsite --admin-enabled true
+    ```
+    - This command enables admin access to the ACR, allowing you to use the admin credentials for authentication.
+
+3. **Log in to ACR**:
+    ```bash
+    az acr login --name votingsite
+    ```
+    - This command logs you into the ACR named `votingsite`. It configures Docker to use this registry, so subsequent Docker commands (like `push`) can interact with it.
+
+4. **Tag and Push the Docker Image to ACR**:
+    Before you push the image, ensure it is tagged correctly. The tag command is missing in your script, so add the following before pushing the image:
+    ```bash
+    docker tag voting-app votingsite.azurecr.io/voting-app:latest
+    ```
+    Then, push the image:
+    ```bash
+    docker push votingsite.azurecr.io/voting-app:latest
+    ```
+    - The `docker tag` command tags your local image (`voting-app`) with the ACR's login server (`votingsite.azurecr.io`) and the tag `latest`.
+    - The `docker push` command uploads this tagged image to the ACR.
+
+5. **Create an App Service Plan**:
+    ```bash
+    az appservice plan create --name voting-site-plan --resource-group voting-site-resource --sku F1 --is-linux
+    ```
+    - This command creates an App Service Plan named `voting-site-plan` within the `voting-site-resource` resource group.
+    - The `--sku F1` parameter specifies the pricing tier (Free tier).
+    - The `--is-linux` parameter specifies that this plan is for Linux-based web apps.
+
+6. **Create a Web App**:
+    ```bash
+    az webapp create --resource-group voting-site-resource --plan voting-site-plan --name voting-site-web --deployment-container-image-name votingsite.azurecr.io/voting-app:latest
+    ```
+    - This command creates a web app named `voting-site-web` within the `voting-site-plan` App Service Plan.
+    - The `--deployment-container-image-name` parameter specifies the Docker image to use, which is `votingsite.azurecr.io/voting-app:latest`.
+
+7. **Configure the Web App to Use Port 8000**:
+    ```bash
+    az webapp config appsettings set --name voting-site-web --resource-group voting-site-resource --settings WEBSITES_PORT=8000
+    ```
+    - This command sets an application setting for the web app `voting-site-web`, specifying that the web app should listen on port 8000.
+
+### Summary of the Complete Workflow:
+
+```bash
+# Create Azure resource group and Azure container registry
+az acr create --resource-group voting-site-resource --name votingsite --sku Basic
+
+# Enable admin access to the ACR
+az acr update --name votingsite --admin-enabled true
+
+# Log in to ACR
+az acr login --name votingsite
+
+# Tag the Docker image for ACR
+docker tag voting-app votingsite.azurecr.io/voting-app:latest
+
+# Push the image to ACR
+docker push votingsite.azurecr.io/voting-app:latest
+
+# Create service plan and select the free plan F1
+az appservice plan create --name voting-site-plan --resource-group voting-site-resource --sku F1 --is-linux
+
+# Create web app within the app service plan and use the Docker image from ACR
+az webapp create --resource-group voting-site-resource --plan voting-site-plan --name voting-site-web --deployment-container-image-name votingsite.azurecr.io/voting-app:latest
+
+# Configure the web app and expose it to port 8000
+az webapp config appsettings set --name voting-site-web --resource-group voting-site-resource --settings WEBSITES_PORT=8000
+```
+
+### Key Points:
+- **Tag the Docker Image**: Ensure you tag your Docker image with the ACR's login server before pushing it.
+- **ACR Login**: Use the `az acr login` command to authenticate Docker with your ACR.
+- **App Service Configuration**: The settings applied to the web app ensure it listens on the correct port (8000).
+
+This script sets up the entire infrastructure for deploying a Dockerized web app to Azure, including creating necessary resources and configuring the deployment environment. If you follow these steps, you should be able to push your Docker image to ACR and deploy it to an Azure Web App successfully.
