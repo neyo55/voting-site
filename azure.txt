@@ -12,6 +12,21 @@ docker images
 
 ############# STEP 2 ###############
 
+
+
+
+SERVICE PLAN: voting-site-plan
+
+
+
+env:
+  REGISTRY_NAME: 'votingsite'
+  IMAGE_NAME: 'voting-app'
+  IMAGE_TAG: 'latest'
+  WEBAPP_NAME: 'voting-site-web'
+  WEBAPP_RESOURCE_GROUP: 'voting-site-resource'
+  SERVICE_PLAN: 'voting-site-plan'
+
 # Select the subscription 
 az account set --subscription "Subscription 1"
 
