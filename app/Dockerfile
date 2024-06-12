@@ -15,8 +15,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the Django project into the container
 COPY . .
 
-# Run database migrations
+# Run database migrations and collect static files
 RUN python manage.py migrate
+RUN python manage.py collectstatic --noinput
 
 # Run the Django development server
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
